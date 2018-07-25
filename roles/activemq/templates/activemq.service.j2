@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# chkconfig: - 91 35
+#
+# description: ActiveMQ Service that launches the ActiveMQ message broker
+# processname: activemq 
+#
+ 
+# Source function library.
+. /etc/rc.d/init.d/functions
+ 
+RETVAL=0
+SCRIPTS_LOCATION="{{activemq_home_path}}/bin"
+LOCK_FILE="{{activemq_home_path}}/{{amq_service_name}}.lock"
+export JDK_HOME='{{java_home_path}}'
+export JAVA_HOME='{{java_home_path}}'
+
+start() {
+    echo "Starting ActiveMQ service"
+    ${SCRIPTS_LOCATION}/activemq start
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && success || failure
+    echo
+    [ $RETVAL -eq 0 ] && touch ${LOCK_FILE}
+    return $RETVAL
+} 
+ 
+stop() {
+    echo "Stopping ActiveMQ service"
+    ${SCRIPTS_LOCATION}/activemq stop
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && success || failure
+    echo
+    [ $RETVAL -eq 0 ] && rm -r ${LOCK_FILE}
+    return $RETVAL
+} 
+
+status() {
+    echo "Checking if activemq service status"
+    PID=`pgrep -of activemq`
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+        echo "ActiveMQ Service is running with PID=$PID"
+        netstat -anp | grep `pgrep -of activemq`
+    else
+        echo "ActiveMQ Service is not running"
+    fi
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac 
+ 
+exit $?

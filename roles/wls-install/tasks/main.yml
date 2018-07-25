@@ -1,0 +1,16 @@
+---
+
+- include: init.yml
+  become: yes
+  become_user: root
+  tags:
+    - install
+
+- include: prepare-install.yml
+  tags:
+    - install
+
+- include: install-wls.yml
+  tags:
+    - install
+

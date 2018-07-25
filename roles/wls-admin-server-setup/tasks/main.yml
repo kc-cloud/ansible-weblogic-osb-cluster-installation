@@ -1,0 +1,34 @@
+---
+
+- name: Create Domain with Admin Server and Cluster
+  shell: "{{ wls_scripts_dir }}/wls_setup_domain_and_cluser.sh > {{ wls_logs_dir }}/wls_setup_domain_and_cluser_$(date +'%F').log 2>&1"
+  register: create_admin_server_cmd
+
+- set_fact:
+    osb_admin_server_created: true
+  when: create_admin_server_cmd.rc == 0
+
+- debug:
+    msg: "Domain, Admin Server, and Cluster are created successfully"
+  when: osb_admin_server_created
+
+- name: Create AdminServer securtiy directory
+  file:
+    path: '{{ domain_home_dir }}/servers/AdminServer/security'
+    state: directory
+    owner: '{{ fmw_user }}'
+    group: '{{ fmw_group }}'
+
+- name: Copy AdminServer and Nodemanager properties files
+  template:
+    src:  '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: '{{ fmw_user }}'
+    group: '{{ fmw_group }}'
+  with_items:
+    - { src: boot.properties.j2, dest: '{{ domain_home_dir }}/servers/AdminServer/security/boot.properties' }
+    - { src: nodemanager.properties.j2, dest: '{{ domain_nodemanager_home }}/nodemanager.properties' }
+    - { src: setUserOverrides.sh.j2, dest: '{{ domain_home_dir }}/bin/setUserOverrides.sh' }
+  ignore_errors: true
+
+

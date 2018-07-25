@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+SCRIPT=$(readlink -f $0)
+SCRIPT_PATH=$(dirname $SCRIPT)
+source ${SCRIPT_PATH}/osb_set_environment_variables.sh
+${FUSION_MIDDLEWARE_HOME}/common/bin/wlst.sh -loadProperties ${SCRIPT_PATH}/../config/osb_environment.properties ${SCRIPT_PATH}/configure_jms.py
+
+

@@ -1,0 +1,46 @@
+---
+- name: Remove existing installation
+  file:
+    state: absent
+    path: "{{ install_folder }}/apache-activemq-5.15.0"
+
+- name: Create activemq data foder
+  file: 
+    state: directory
+    path: "{{activemq.data_dir}}"
+
+- name: Install ActiveMQ
+  unarchive:
+    src: "{{ amq_tar_path }}"
+    dest: "{{ install_folder }}"
+    copy: no
+
+- name: Configure ActiveMQ Broker
+  template:
+    src: "activemq.xml.j2"
+    dest: "{{ install_folder }}/apache-activemq-5.15.0/conf/activemq.xml"
+
+- name: Configure Jetty
+  template:
+    src: "jetty.xml.j2"
+    dest: "{{ install_folder }}/apache-activemq-5.15.0/conf/jetty.xml"
+
+- name: Configure Jetty Web Server Security 
+  copy:
+    src: jetty-realm.properties
+    dest: "{{ install_folder }}/apache-activemq-5.15.0/conf/jetty-realm.properties"
+
+- name: Copy SSL Key
+  copy:
+    src: broker.ks
+    dest: "{{jetty.keystore_path}}"
+
+- name: Add ActiveMQ service
+  template:
+    src: activemq.service.j2
+    dest: "/etc/init.d/{{activemq.service_name}}"
+    mode: 0755
+  become: yes
+  become_user: root
+
+

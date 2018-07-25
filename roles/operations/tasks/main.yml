@@ -1,0 +1,87 @@
+---
+
+- name: Stop ActiveMQ service
+  service:
+    name: '{{amq_service_name}}'
+    state: stopped
+    enabled: yes
+  tags:
+    - stop-activemq
+
+- name: Start ActiveMQ service
+  service:
+    name: '{{amq_service_name}}'
+    state: started
+    enabled: yes
+  tags:
+    - start-activemq
+    - start-admin-server
+  ignore_errors: true
+
+- name: Start Node Manager
+  service:
+    name: '{{nm_service_name}}'
+    state: started
+    enabled: yes
+  tags:
+    - start-admin-server
+    - start-managed-server
+    - start-remote-server
+    - start-node-manager
+  ignore_errors: true
+
+- name: Wait for NodeManager to startup
+  wait_for:
+    port: '{{wls_nodemanager_listen_port}}'
+    host: '{{ansible_fqdn}}'
+    delay: 10
+    timeout: 600
+  ignore_errors: true
+  tags:
+    - start-admin-server
+    - start-managed-server
+    - start-remote-server
+
+- name: Start AdminServer
+  shell: "{{ osb_scripts_dir }}/osb_control_admin_server.sh start >> {{ osb_logs_dir }}/control_admin_server_$(date +'%F').log 2>&1"
+  tags:
+    - start-admin-server
+
+- name: Wait for AdminServer to startup
+  wait_for:
+    port: '{{wls_admin_server_listen_port}}'
+    host: '{{wls_admin_server_listen_address}}'
+    delay: 10
+    timeout: 600
+  ignore_errors: true
+  tags:
+    - start-admin-server
+
+- name: Start Managed Servers
+  shell: "{{ osb_scripts_dir }}/osb_control_managed_servers.sh start >> {{ osb_logs_dir }}/control_managed_servers_$(date +'%F').log 2>&1"
+  tags:
+    - start-managed-server
+    - start-remote-server
+
+- name: Wait for Managed Servers to startup
+  wait_for:
+    port: '{{domain_managed_server_listen_port_start}}'
+    host: '{{ansible_fqdn}}'
+    delay: 30
+    timeout: 300
+  ignore_errors: true
+  tags:
+    - start-managed-server
+    - start-remote-server
+
+- name: Stop AdminServer
+  shell: "{{ osb_scripts_dir }}/osb_control_admin_server.sh stop >> {{ osb_logs_dir }}/control_admin_server_$(date +'%F').log 2>&1"
+  tags:
+    - stop-admin-server
+  
+- name: Stop Managed Servers
+  shell: "{{ osb_scripts_dir }}/osb_control_managed_servers.sh stop >> {{ osb_logs_dir }}/control_managed_servers_$(date +'%F').log 2>&1"
+  tags:
+    - stop-managed-server
+    - stop-remote-server
+

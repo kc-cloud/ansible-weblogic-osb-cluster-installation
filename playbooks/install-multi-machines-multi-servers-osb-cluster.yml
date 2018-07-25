@@ -1,0 +1,44 @@
+---
+
+- hosts: all
+  strategy: free
+  gather_facts: true
+  pre_tasks:
+    - name: Give Permission to the installation folder
+      file: 
+        path: '{{ item }}'
+        owner: '{{ fmw_user }}'
+        group: '{{ fmw_group }}'
+        state: directory
+      with_items:
+         - /opt
+         - /webapps
+         - /weblogs
+         - '{{ oracle_base_path }}'
+         - '{{ fmw_inventory_path }}'
+         - '{{ wls_logs_dir }}'
+         - '{{ wls_scripts_dir }}'
+         - '{{ osb_logs_dir }}'
+         - '{{ wls_config_dir }}'
+      tags:
+         - install
+
+- hosts: managed_servers
+  strategy: free
+  roles:
+    - { role: java, tags: 'install' }
+    - { role: wls-install, tags: 'install' }
+    - { role: osb-install, tags: 'install' }
+
+- hosts: admin_server
+  environment:
+    JAVA_HOME: '{{java_home_path}}'
+  roles:
+    - { role: activemq, tags: 'install' }
+    - { role: rcu, tags: 'install' }
+    - { role: osb-admin-server-setup, tags: 'install' }
+    - { role: project-config, tags: 'vg4-config' }
+
+- hosts: managed_servers:!admin_server
+  roles:
+    - { role: remote-server-setup, tags: 'ms-config' }

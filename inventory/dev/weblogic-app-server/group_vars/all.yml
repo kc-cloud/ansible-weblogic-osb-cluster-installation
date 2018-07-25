@@ -1,0 +1,74 @@
+---
+
+## Common Folders and Files
+oracle_base_path: '/opt/wls12c'
+java_home_path: '/opt/jdk1.8.0_161'
+domain_name: 'wl_domain'
+weblogic_version: '12c'
+weblogic_release: '12.2.1.2.0'
+weblogic_jar_path: '/share/software/oracle-installables/fmw_12.2.1.2.0_infrastructure.jar'
+weblogic_installation_type: 'Fusion Middleware Infrastructure'
+install_folder: '/opt'
+java_tar_path: '/share/software/oracle-installables/jdk-8u161-linux-x64.tar.gz'
+amq_tar_path: '/share/software/oracle-installables/apache-activemq-5.15.0-bin.tar.gz'
+## Fusion Middleware Folders
+fmw_user: 'weblogic'
+fmw_group: 'middleware'
+fmw_inventory_path: '/opt/wls12c/inventory'
+fmw_home_dir: '/home/weblogic'
+fmw_middleware_dir: '/opt/wls12c/middleware'
+
+## Weblogic Configurations
+wls_home_dir: '/opt/wls12c/middleware/wlserver'
+wls_scripts_dir: '/home/weblogic/scripts'
+wls_download_dir: '/share/software/oracle-installables'
+wls_logs_dir: '/logs/wls12c/wls_logs'
+wls_install_response_file: '/home/weblogic/wls.rsp'
+wls_nodemanager_listen_address: '{{ ansible_fqdn }}'
+wls_nodemanager_listen_port: 5556
+wls_nodemanager_connection_mode: 'plain'
+#wls_nodemanager_connection_mode: 'ssl'
+wls_admin_server_name: 'AdminServer'
+wls_admin_server_listen_address: "{{ groups['admin_server'][0] }}"
+wls_admin_server_listen_port: 7001
+wls_admin_username: 'weblogic'
+wls_admin_password: 'weblogic12c'
+
+## Node Manager Configurations
+nm_service_name: 'wl-nodemanager'
+
+## OSB Configurations
+wls_install_response_file: '/home/weblogic/wls.rsp'
+wls_logs_dir: '/logs/wls12c/wls_logs'
+wls_config_dir: '/home/weblogic/config'
+wls_scripts_dir: '/home/weblogic/scripts'
+
+## Domain Configurations
+domain_config_home: '/config/wls12c/user_projects'
+domain_home_dir: '/config/wls12c/user_projects/domains/{{domain_name}}'
+domain_managed_servers_per_machine: 1
+domain_managed_server_listen_port_start: 7003
+domain_managed_server_listen_address: '{{ ansible_fqdn }}'
+domain_cluster_name: 'wl_cluster'
+domain_nodemanager_home: '{{domain_home_dir}}/nodemanager'
+
+## Database Configurations
+database_server_name: ''
+database_server_port: ''
+database_service: ''
+database_sysdba_user: ''
+database_sysdba_passwd: ''
+database_datasource_password: ''
+database_repository_prefix: ''
+
+## Memory Settings
+settings_admin_server_heap_size: '1024m'
+settings_admin_server_perm_size: '256m'
+settings_managed_server_heap_size: '2048m'
+settings_managed_server_perm_size: '512m'
+settings_coherence_server_heap_size: '256m'
+settings_coherence_server_perm_size: '128m'
+
+
+amq_service_name: ''
+

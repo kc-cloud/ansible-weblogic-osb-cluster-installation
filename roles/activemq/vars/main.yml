@@ -1,0 +1,21 @@
+---
+
+archive: "{{download_folder}}/apache-activemq-5.15.0-bin.tar.gz"
+
+activemq:
+   broker_name: vg4amq
+   tcp_port: 7111
+   data_dir: /config/activemq-data
+   home_dir: "{{install_folder}}/apache-activemq-5.15.0"
+   service_name: activemq
+   tcp_hostname: '{{ ansible_fqdn }}'
+
+jetty:
+   webconsole_port: 7112
+   ssl_port: 7113
+   keystore_path: /config/shared/activeMQCerts515/broker.ks
+   keystore_pwd: Eohhs12!
+
+stack:
+  user: '{{ fmw_user }}'
+  group: '{{ fmw_group }}'

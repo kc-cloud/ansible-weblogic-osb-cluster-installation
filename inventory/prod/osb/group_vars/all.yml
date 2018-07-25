@@ -1,0 +1,94 @@
+---
+
+## Common Folders and Files
+download_folder: /share/software/oracle-installables
+oracle_base_path: '/opt/osb12c'
+config_base_path: '/config/osb12c'
+log_base_path: '/logs/osb12c'
+java_home_path: '/opt/jdk1.8.0_161'
+activemq_home_path: '/opt/apache-activemq-5.15.0'
+domain_name: 'osb_domain'
+weblogic_version: '12c'
+weblogic_release: '12.2.1.2.0'
+weblogic_jar_path: '{{download_folder}}/fmw_12.2.1.2.0_infrastructure.jar'
+osb_jar_path: '{{download_folder}}/fmw_12.2.1.2.0_osb.jar'
+weblogic_installation_type: 'Fusion Middleware Infrastructure'
+#weblogic_installation_type: 'WebLogic Server'
+install_folder: '/opt'
+java_tar_path: '{{download_folder}}/jdk-8u161-linux-x64.tar.gz'
+amq_tar_path: '/share/software/oracle-installables/apache-activemq-5.15.0-bin.tar.gz'
+
+## Fusion Middleware Folders
+fmw_user: 'weblogic'
+fmw_group: 'weblogic'
+fmw_inventory_path: '/opt/osb12c/inventory'
+fmw_home_dir: '/home/weblogic'
+fmw_middleware_dir: '/opt/osb12c/middleware'
+
+## Weblogic Configurations
+wls_home_dir: '/opt/osb12c/middleware/wlserver'
+wls_scripts_dir: '/home/weblogic/scripts'
+wls_download_dir: '{{download_folder}}'
+wls_logs_dir: '/logs/osb12c/wls_logs'
+wls_install_response_file: '/home/weblogic/wls.rsp'
+wls_nodemanager_listen_address: '{{ ansible_fqdn }}'
+wls_nodemanager_listen_port: 5556 
+wls_nodemanager_connection_mode: 'plain'
+#wls_nodemanager_connection_mode: 'ssl'
+wls_admin_server_name: 'AdminServer'
+wls_admin_server_listen_address: "{{ groups['admin_server'][0] }}"
+wls_admin_server_listen_port: 7001
+wls_admin_username: 'weblogic'
+wls_admin_password: 'welcome1'
+
+## Node Manager Configurations
+nm_service_name: 'osb-nodemanager'
+
+## OSB Configurations
+osb_install_response_file: '/home/weblogic/osb.rsp'
+osb_logs_dir: '/logs/osb12c/osb_logs'
+wls_config_dir: '/home/weblogic/config'
+osb_scripts_dir: '/home/weblogic/scripts'
+
+## Domain Configurations
+domain_config_home: '/config/osb12c/user_projects'
+domain_home_dir: '/config/osb12c/user_projects/domains/{{domain_name}}'
+domain_managed_servers_per_machine: 1
+domain_managed_server_listen_port_start: 7003
+domain_managed_server_listen_address: '{{ ansible_fqdn }}'
+domain_cluster_name: 'osb_cluster'
+domain_nodemanager_home: '{{domain_home_dir}}/nodemanager'
+
+## Database Configurations
+database_server_name: 'osb-prod-db-server'
+database_server_port: '1521'
+database_service: 'osb-db-service'
+database_sysdba_user: 'osb-dba'
+database_sysdba_passwd: 'welcome1'
+database_datasource_password: 'welcome2'
+database_repository_prefix: 'osb12c'
+
+
+## Memory Settings
+settings_admin_server_heap_size: '1024m'
+settings_admin_server_perm_size: '256m'
+settings_managed_server_heap_size: '2048m'
+settings_managed_server_perm_size: '512m'
+settings_coherence_server_heap_size: '256m'
+settings_coherence_server_perm_size: '128m'
+
+
+## OSB Project configurations
+outqueue_name: 'QUEUE1'
+inqueue_name: 'QUEUE2'
+error_queue_name: 'ERRORQ3'
+amq_port: 7004
+amq_username: 'weblogic'
+amq_password: 'welcome1'
+foreign_queue_names: ['FQUEUE1', 'FQUEUE2']
+vg4_datasources:
+  - {'name': 'app1-ds-1', 'jndi_name': 'jdbc/app1-ds-1', 'url': 'jdbc:oracle:thin:@osb-db-server:1521/osb-db-service', 'user': 'osbuser', 'password': 'welcome1'}
+  - {'name': 'app1-ds-2', 'jndi_name': 'jdbc/app1-ds-2', 'url': 'jdbc:oracle:thin:@osb-db-server:1521/app-db-service', 'user': 'appuser', 'password': 'welcom1'}
+
+amq_service_name: activemq
+

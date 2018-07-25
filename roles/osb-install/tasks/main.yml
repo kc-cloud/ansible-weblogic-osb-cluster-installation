@@ -1,0 +1,13 @@
+---
+
+- name: Prepare OSB installation response file
+  template:
+    src: osb.rsp.j2
+    dest: "{{ osb_install_response_file }}"
+  tags:
+    - install
+
+- name: Install Oracle Service Bus
+  shell: "{{ java_home_path  }}/bin/java -Xms1024m -Xmx1024m  -Djava.io.tmpdir={{ osb_logs_dir }} -jar {{ osb_jar_path }} -silent -invPtrLoc {{oracle_base_path}}/oraInst.loc  -responseFile {{ osb_install_response_file }} > {{ osb_logs_dir }}/osb_installation_$(date +'%F').log 2>&1"
+  tags:
+    - install

@@ -1,0 +1,37 @@
+---
+
+- name: Create needed directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+  with_items:
+    - "{{ fmw_middleware_dir }}"
+
+- name: Prepare installation response file
+  template:
+    src: "install-wls-12c.rsp.j2"
+    dest: "{{ wls_install_response_file }}"
+
+- debug:
+    msg: "template install-wls-{{ weblogic_version }}.rsp.j2 is copied to  {{ wls_install_response_file }} as a response file"
+
+- name: Prepare command for generic installation in silent mode
+  set_fact:
+    weblogic_install_command: "{{ java_home_path  }}/bin/java -Xmx1024m -Djava.io.tmpdir={{ wls_logs_dir }}  -jar {{ weblogic_jar_path }} -silent -invPtrLoc {{oracle_base_path}}/oraInst.loc  -responseFile {{ wls_install_response_file }} -force > {{ wls_logs_dir }}/weblogic_generic_installation_$(date +'%F').log 2>&1"
+
+- debug:
+    msg: "{{ weblogic_install_command }} will be executed now .. "
+
+- name: Install WebLogic Server
+  shell: "{{ weblogic_install_command }}"
+  args:
+    creates: "{{ fmw_middleware_dir }}/oraInst.lock"
+
+- name: Update 'JVM_ARGS' variable within wlst script
+  lineinfile:
+    dest: "{{ fmw_middleware_dir }}/oracle_common/common/bin/wlst.sh"
+    regexp: '^JVM_ARGS='
+    line: JVM_ARGS="-Dprod.props.file='${WL_HOME}'/.product.properties ${WLST_PROPERTIES} ${JVM_D64} ${UTILS_MEM_ARGS} ${COMMON_JVM_ARGS} ${CONFIG_JVM_ARGS} -Djava.security.egd=file:///dev/urandom"
+

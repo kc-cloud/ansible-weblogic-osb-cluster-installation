@@ -1,0 +1,6 @@
+---
+
+- hosts: managed_servers
+  roles:
+    - { role: operations }
+

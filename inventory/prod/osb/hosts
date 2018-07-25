@@ -1,0 +1,6 @@
+[admin_server]
+osb-prod-appserver-1
+
+[managed_servers]
+osb-prod-appserver-1
+osb-prod-appserver-2

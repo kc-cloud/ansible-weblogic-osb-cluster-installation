@@ -1,0 +1,5 @@
+---
+- hosts: admin_server
+  roles:
+    - { role: operations }
+

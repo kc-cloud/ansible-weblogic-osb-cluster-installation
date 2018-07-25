@@ -1,0 +1,268 @@
+#
+# This is a WLST script to create and configure an OSB eluster.
+#
+
+import traceback
+
+print '[INFO] Configuration Starts..'
+admin_server_url = 't3://{{wls_admin_server_listen_address}}:{{wls_admin_server_listen_port}}'
+amq_url = 'tcp://{{wls_admin_server_listen_address}}:{{amq_port}}'
+fServer_name = "VGAMQForeignServer"
+amq_foreignserver_url = amq_url+"?jms.transactedIndividualAck=true&jms.prefetchPolicy.all=1"
+
+file_store_name = 'WeblogicMQFileStore'
+jms_server_name = 'WeblogicMQServer'
+jms_module_name = 'WeblogicMQModule'
+wls_qcf_name = 'WeblogicMQCF'
+
+amq_platform_bridge_destination='AMQ_PLTFRM_OutboundQueue_Destination'
+wls_platform_bridge_destination='WLS_PLTFRM_OutboundQueue_Destination'
+amq_app_bridge_destination='AMQ_APP_OutboundQueue_Destination'
+wls_app_bridge_destination='WLS_APP_OutboundQueue_Destination'
+
+amq_icf = 'org.apache.activemq.jndi.ActiveMQInitialContextFactory'
+amq_qcf_jndi_name = 'QueueConnectionFactory'
+destination_type = 'Queue'
+
+wls_icf = 'weblogic.jndi.WLInitialContextFactory'
+wls_qcf_jndi_name = 'javax.jms.QueueConnectionFactory'
+
+platform_bridge_name = 'AMQ_2_WL_PLTFRM_OutboundQueue_Bridge'
+app_bridge_name = 'AMQ_2_WL_APP_OutboundQueue_Bridge'
+
+outqueue_name = '{{outqueue_name}}'
+app_queue_name = '{{inqueue_name}}'
+error_queue_name = '{{error_queue_name}}'
+foreign_queue_names={{foreign_queue_names}}
+
+domain_configuration_home = os.getenv('DOMAIN_CONFIGURATION_HOME')
+domain_cluster_name='{{domain_cluster_name}}'
+datasources={{platform_datasources}}
+
+print "Connecting to admin server  ..."
+connect( '{{wls_admin_username}}', '{{wls_admin_password}}', admin_server_url)
+edit()
+startEdit()
+
+admin_server_mb=getMBean("Servers/AdminServer")
+if admin_server_mb is None:
+    print 'Value is Null'
+else:
+    try:
+        print 'Creating File Store for JMS server and targetting to AdminServer'
+        filestore1 = cmo.lookupFileStore(file_store_name)
+        if filestore1 is None:
+            filestore1 = cmo.createFileStore(file_store_name)
+        filestore1.setDirectory(domain_configuration_home + '/deploy')
+        filestore1.addTarget(admin_server_mb)
+            
+        print 'Creating JMS Server';
+        jmsserver1 = cmo.lookupJMSServer(jms_server_name)
+        if jmsserver1 is None:
+            jmsserver1 = cmo.createJMSServer(jms_server_name)
+        jmsserver1.setPersistentStore(filestore1)
+        jmsserver1.addTarget(admin_server_mb)
+
+        print 'Creating JMS System Module'
+        module = cmo.lookupJMSSystemResource(jms_module_name)
+        if module is None:
+            module = cmo.createJMSSystemResource(jms_module_name)
+        module.addTarget(admin_server_mb)
+
+        subDep1mb = module.lookupSubDeployment('DeployToJMSServer')
+        if subDep1mb is None:
+            subDep1mb = module.createSubDeployment('DeployToJMSServer')
+        subDep1mb.addTarget(jmsserver1)
+         
+        resource = module.getJMSResource();
+ 
+        print 'Creating connection factory'
+        wls_qcf = resource.lookupConnectionFactory(wls_qcf_name)
+        if wls_qcf is None:
+            wls_qcf = resource.createConnectionFactory(wls_qcf_name);
+        wls_qcf.setJNDIName(wls_qcf_name)
+        wls_qcf.setDefaultTargetingEnabled(true)
+
+        print "Creating PLTFRM outboud queue..."
+        jmsqueue1 = resource.lookupQueue(outqueue_name)
+        if jmsqueue1 is None:
+            jmsqueue1 = resource.createQueue(outqueue_name)
+        jmsqueue1.setJNDIName(outqueue_name)
+        jmsqueue1.setSubDeploymentName('DeployToJMSServer')
+
+        print "Creating APPLICATION outboud queue..."
+        jmsqueue2 = resource.lookupQueue(mws_queue_name)
+        if jmsqueue2 is None:
+            jmsqueue2 = resource.createQueue(mws_queue_name)
+        jmsqueue2.setJNDIName(mws_queue_name)
+        jmsqueue2.setSubDeploymentName('DeployToJMSServer')
+        
+        print "Creating ERROR outboud queue..."
+        jmsqueue3 = resource.lookupQueue(error_queue_name)
+        if jmsqueue3 is None:
+            jmsqueue3 = resource.createQueue(error_queue_name)
+        jmsqueue3.setJNDIName(error_queue_name)
+        jmsqueue3.setSubDeploymentName('DeployToJMSServer')
+       
+        print "Creating AMQ_PLTFRM_OutboundQueue_Destination"
+        bd1 = cmo.lookupJMSBridgeDestination(amq_platform_bridge_destination)
+        if bd1 is None:
+            bd1 = cmo.createJMSBridgeDestination(amq_platform_bridge_destination)
+        bd1.setConnectionURL(amq_url)
+        bd1.setInitialContextFactory(amq_icf)
+        bd1.setAdapterJNDIName('eis.jms.WLSConnectionFactoryJNDIXA')
+        bd1.setConnectionFactoryJNDIName(amq_qcf_jndi_name)
+        bd1.setDestinationJNDIName(outqueue_name)
+        bd1.setUserName('{{amq_username}}')
+        bd1.setUserPassword('{{amq_password}}')
+
+        print "Creating WLS_PLTFRM_OutboundQueue_Destination"
+        bd2 = cmo.lookupJMSBridgeDestination(wls_platform_bridge_destination)
+        if bd2 is None:
+            bd2 = cmo.createJMSBridgeDestination(wls_platform_bridge_destination)
+        bd2.setConnectionURL(admin_server_url)
+        bd2.setInitialContextFactory(wls_icf)
+        bd2.setAdapterJNDIName('eis.jms.WLSConnectionFactoryJNDIXA')
+        bd2.setConnectionFactoryJNDIName(wls_qcf_jndi_name)
+        bd2.setDestinationJNDIName(outqueue_name)
+
+        print "Creating AMQ_APP_OutboundQueue_Destination"
+        bd3 = cmo.lookupJMSBridgeDestination(amq_mws_bridge_destination)
+        if bd3 is None:
+            bd3 = cmo.createJMSBridgeDestination(amq_mws_bridge_destination)
+        bd3.setConnectionURL(amq_url)
+        bd3.setInitialContextFactory(amq_icf)
+        bd3.setAdapterJNDIName('eis.jms.WLSConnectionFactoryJNDIXA')
+        bd3.setConnectionFactoryJNDIName(amq_qcf_jndi_name)
+        bd3.setDestinationJNDIName(mws_queue_name)
+        bd3.setUserName('{{amq_username}}')
+        bd3.setUserPassword('{{amq_password}}')		
+
+        print "Creating WLS_APP_OutboundQueue_Destination"
+        bd4 = cmo.lookupJMSBridgeDestination(wls_mws_bridge_destination)
+        if bd4 is None:
+            bd4 = cmo.createJMSBridgeDestination(wls_mws_bridge_destination)
+        bd4.setConnectionURL(admin_server_url)
+        bd4.setInitialContextFactory(wls_icf)
+        bd4.setAdapterJNDIName('eis.jms.WLSConnectionFactoryJNDIXA')
+        bd4.setConnectionFactoryJNDIName(wls_qcf_jndi_name)
+        bd4.setDestinationJNDIName(mws_queue_name)
+
+        print "Creating AMQ_2_WL_PLTFRM_OutboundQueue_Bridge"
+        bridge1 = cmo.lookupMessagingBridge(platform_bridge_name)
+        if bridge1 is None:
+            bridge1 = cmo.createMessagingBridge(platform_bridge_name)
+        bridge1.addTarget(admin_server_mb)
+        bridge1.setSourceDestination(bd1)
+        bridge1.setTargetDestination(bd2)
+        bridge1.setStarted(true)
+        bridge1.setQualityOfService('Exactly-once')		
+        bridge1.setQOSDegradationAllowed(true)
+        bridge1.setAsyncEnabled(true)
+        bridge1.setDurabilityEnabled(true)
+        bridge1.setPreserveMsgProperty(true)
+		
+        print "Creating AMQ_2_WL_APP_OutboundQueue_Bridge"
+        bridge2 = cmo.lookupMessagingBridge(mws_bridge_name)
+        if bridge2 is None:
+            bridge2 = cmo.createMessagingBridge(mws_bridge_name)
+        bridge2.addTarget(admin_server_mb)
+        bridge2.setSourceDestination(bd3)
+        bridge2.setTargetDestination(bd4)
+        bridge2.setStarted(true)
+        bridge2.setQualityOfService('Exactly-once')		
+        bridge2.setQOSDegradationAllowed(true)
+        bridge2.setAsyncEnabled(true)
+        bridge2.setDurabilityEnabled(true)
+        bridge2.setPreserveMsgProperty(true)
+
+        print 'Creating ActiveMQ Foreign Server'
+        fModule = cmo.lookupJMSSystemResource("VGAMQForeignServerModule")
+        if fModule is None:
+            fModule = cmo.createJMSSystemResource("VGAMQForeignServerModule")
+        fModule.addTarget(admin_server_mb)
+        
+        fResource = fModule.getJMSResource();
+        fServer = fResource.lookupForeignServer(fServer_name)
+        if fServer is None:
+            fServer = fResource.createForeignServer(fServer_name)
+        fServer.setConnectionURL(amq_foreignserver_url)
+        fServer.setInitialContextFactory(amq_icf)
+        fServer.setDefaultTargetingEnabled(true)
+
+        amq_jms_fcf = fServer.lookupForeignConnectionFactory('AMQXAConnectionFactory')
+        if amq_jms_fcf is None:
+            amq_jms_fcf = fServer.createForeignConnectionFactory('AMQXAConnectionFactory')
+        amq_jms_fcf.setLocalJNDIName('vg.AMQXAConnectionFactory')
+        amq_jms_fcf.setRemoteJNDIName('XAConnectionFactory')
+        
+        for queue_name in foreign_queue_names:
+            queue = fServer.lookupForeignDestination(queue_name)
+            if queue is None:
+                queue = fServer.createForeignDestination(queue_name)
+            queue.setRemoteJNDIName('dynamicQueues/'+queue_name)
+            queue.setLocalJNDIName('vg.'+queue_name)
+
+	print 'Creating work manager'
+	cluster_mb=getMBean('/Clusters/'+domain_cluster_name)
+	if cluster_mb:
+		self_tuning = cmo.getSelfTuning()
+		mws_workmanager = self_tuning.lookupWorkManager('mws-consumers-workmanager')
+		if mws_workmanager is None:
+			mws_workmanager = self_tuning.createWorkManager('mws-consumers-workmanager')
+		mws_workmanager.addTarget(cluster_mb)
+		
+		max_count = self_tuning.lookupMaxThreadsConstraint('mws-consumers-max-count')
+		if max_count is None:
+			max_count = self_tuning.createMaxThreadsConstraint('mws-consumers-max-count')
+		max_count.setCount(1)
+		max_count.addTarget(cluster_mb)
+		
+		min_count = self_tuning.lookupMinThreadsConstraint('mws-consumers-min-count')
+		if min_count is None:
+			min_count = self_tuning.createMinThreadsConstraint('mws-consumers-min-count')
+		min_count.setCount(1)
+		min_count.addTarget(cluster_mb)
+		mws_workmanager.setMaxThreadsConstraint(max_count)
+		mws_workmanager.setMinThreadsConstraint(min_count)
+	else:
+		print 'Unable to lookup Cluster MBean. Work Manager creation failed'
+
+        data_source_driver='oracle.jdbc.xa.client.OracleXADataSource'
+        data_source_test='SQL SELECT 1 FROM DUAL'
+        print "Creating Datasource"
+	for db_params in datasources:
+                datasource = cmo.lookupJDBCSystemResource(db_params['name'])
+                if datasource is None:
+                        datasource = cmo.createJDBCSystemResource(db_params['name'])
+                        datasource.setName(db_params['name'])
+                # DB source parameters
+                jdbcResource = datasource.getJDBCResource()
+                jdbcResource.setName(db_params['name'])
+                dpBean = jdbcResource.getJDBCDataSourceParams()
+                dpBean.setJNDINames([db_params['jndi_name']])
+
+                # DB Driver parameters
+                drBean = jdbcResource.getJDBCDriverParams()
+                drBean.setUrl(db_params['url'])
+                drBean.setDriverName(data_source_driver)
+                drBean.setPassword(db_params['password'])
+                propBean = drBean.getProperties()
+                myBean = propBean.createProperty('user')
+                myBean.setValue(db_params['user'])
+
+                # DB SQL test
+                ppBean = jdbcResource.getJDBCConnectionPoolParams()
+                ppBean.setTestTableName(data_source_test)
+                datasource.addTarget(cluster_mb)
+
+        save()
+        activate(block="true")
+        print "script returns SUCCESS"
+        disconnect()
+    except:
+        traceback.print_exc()
+        print "Error while trying to save and/or activate!!!"
+        dumpStack()
+        cancelEdit('y')
+        exit()

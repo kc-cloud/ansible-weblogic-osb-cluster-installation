@@ -1,0 +1,6 @@
+---
+
+- name: Purge OSB schemas
+  shell: "{{ fmw_middleware_dir }}/oracle_common/bin/rcu -silent -dropRepository -databaseType ORACLE -connectString {{ database_server_name }}:{{ database_server_port }}:{{ database_service }} -dbUser {{ database_sysdba_user }} -dbRole SYSDBA -schemaPrefix {{ database_repository_prefix  }} -component MDS -component IAU -component IAU_APPEND -component IAU_VIEWER -component OPSS -component UCSUMS -component WLS -component STB -component SOAINFRA -f <  {{ wls_scripts_dir }}/db_passwords.txt > {{ osb_logs_dir }}/purge_osb_schemas_$(date +'%F').log 2>&1"
+  ignore_errors: true
+

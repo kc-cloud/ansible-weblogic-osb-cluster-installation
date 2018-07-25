@@ -1,0 +1,40 @@
+#
+# This file is managed by Ansible
+#
+
+#
+# OSB cluster configuration
+#
+oracle_user_name={{ fmw_user }}
+oracle_group_name={{ fmw_group }}
+domain_name={{ domain_name }}
+cluster_name={{ domain_cluster_name }}
+managed_servers_per_machine={{domain_managed_servers_per_machine}}
+managed_server_listen_port_start={{domain_managed_server_listen_port_start}}
+managed_server_listen_address={{ansible_fqdn}}
+managed_server_name={{managed_server_name}}
+#
+# Oracle database connection parameters
+#
+data_source_url=jdbc:oracle:thin:@{{database_server_name}}:{{database_server_port}}/{{database_service}}
+data_source_user_prefix={{database_repository_prefix}}
+data_source_password={{database_datasource_password}}
+
+#
+# Node Manager configuration
+#
+nodemanager_listen_address={{ansible_fqdn}}
+nodemanager_username={{wls_admin_username}}
+nodemanager_password={{wls_admin_password}}
+nodemanager_listen_port={{wls_nodemanager_listen_port}}
+nodemanager_connection_mode={{wls_nodemanager_connection_mode}}
+
+#
+# AdminServer configuration
+#
+admin_server_name={{wls_admin_server_name}}
+admin_server_listen_address={{wls_admin_server_listen_address}}
+admin_server_listen_port={{wls_admin_server_listen_port}}
+admin_username={{wls_admin_username}}
+admin_password={{wls_admin_password}}
+

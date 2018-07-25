@@ -1,0 +1,38 @@
+---
+
+- name: Copy Project resource configuration  scripts
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+    mode: 0750
+  with_items:
+    - { src: configure_jms.py.j2, dest: "{{ wls_scripts_dir }}/configure_jms.py" }
+    - { src: configure_jms.sh.j2, dest: "{{ wls_scripts_dir }}/configure_jms.sh" }
+
+- name: Copy JNDI files and activemq JAR files
+  copy:
+    src:  '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: '{{ fmw_user }}'
+    group: '{{ fmw_group }}'
+  with_items:
+    - { src: jndi.properties, dest: '{{ domain_home_dir }}/lib/jndi.properties' }
+    - { src: jndi.jar, dest: '{{ domain_home_dir }}/lib/jndi.jar' }
+    - { src: activemq-all-5.15.0.jar, dest: '{{ domain_home_dir }}/lib/activemq-all-5.15.0.jar' }
+
+- lineinfile:
+    path: '{{ domain_home_dir }}/bin/setDomainEnv.sh'
+    #regexp: '^export WL_HOME '
+    insertafter: '{{item.insertafter}}' 
+    line: '{{item.line}}'
+  with_items:
+    - {insertafter : '^export DOMAIN_HOME', line: 'PRE_CLASSPATH="${DOMAIN_HOME}/lib/jndi.jar:${DOMAIN_HOME}/lib/activemq-all-5.15.0.jar"' }
+    - {insertafter : '^PRE_CLASSPATH=', line: 'export PRE_CLASSPATH' }
+
+- name: Create resources required for the OSB project
+  shell: "{{ osb_scripts_dir }}/configure_jms.sh > {{ osb_logs_dir }}/configure_jms_$(date +'%F').log 2>&1"
+  register: project_config_cmd 
+
+

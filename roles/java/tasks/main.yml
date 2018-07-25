@@ -1,0 +1,12 @@
+---
+
+- name: Remove existing installation
+  file:
+    state: absent
+    path: "{{ install_folder }}/jdk1.8.0_161"
+
+- name: Install Java
+  unarchive:
+    src: "{{ java_tar_path }}"
+    dest: "{{ install_folder }}"
+    copy: no

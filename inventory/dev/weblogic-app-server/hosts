@@ -1,0 +1,5 @@
+[admin_server]
+wl-dev-appserver-1
+
+[managed_servers]
+wl-dev-appserver-1

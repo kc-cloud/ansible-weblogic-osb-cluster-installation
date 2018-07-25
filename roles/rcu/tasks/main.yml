@@ -1,0 +1,16 @@
+---
+
+- name: Password response file for repository creation
+  template:
+    src: db_passwords.txt
+    dest: "{{ wls_scripts_dir }}/db_passwords.txt"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+    
+- include: remove-schema.yml
+  tags:
+    - rcu
+  
+- include: rcu.yml
+  tags:
+    - rcu

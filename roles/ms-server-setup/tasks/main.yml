@@ -1,0 +1,39 @@
+---
+
+- name: Create Managed Server and add to the cluster
+  shell: "{{ osb_scripts_dir }}/setup_MS_add_to_cluster.sh > {{ osb_logs_dir }}/setup_MS_add_to_cluster_$(date +'%F').log 2>&1"
+  register: create_ms_server_cmd
+
+- debug:
+    msg: "Managed Server is created and added to cluster successfully"
+  when: create_ms_server_cmd.rc == 0
+
+- name: Copy Nodemanager properties files
+  template:
+    src:  '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: '{{ fmw_user }}'
+    group: '{{ fmw_group }}'
+  with_items:
+    - { src: nodemanager.properties.j2, dest: '{{ domain_nodemanager_home }}/nodemanager.properties' }
+    - { src: setUserOverrides.sh.j2, dest: '{{ domain_home_dir }}/bin/setUserOverrides.sh' }
+  ignore_errors: true
+
+- name: Start Node Managera
+  service:
+    name: '{{nm_service_name}}'
+    state: started
+    enabled: yes
+
+- name: Start Managed Servers
+  shell: "{{ osb_scripts_dir }}/osb_control_managed_servers.sh start >> {{ osb_logs_dir }}/control_managed_servers_$(date +'%F').log 2>&1"
+
+- name: Wait for Managed Servers to startup
+  wait_for:
+    port: '{{domain_managed_server_listen_port_start}}'
+    host: '{{domain_managed_server_listen_address}}'
+    delay: 60
+    timeout: 600
+  ignore_errors: true
+
+

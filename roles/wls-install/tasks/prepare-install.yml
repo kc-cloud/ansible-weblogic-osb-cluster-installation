@@ -1,0 +1,85 @@
+---
+
+- name: Prepare oracle inventory parameters
+  template:
+    src: oraInst.loc.j2
+    dest: "{{oracle_base_path}}/oraInst.loc"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+
+- name: Check if the installation Jar file exists already
+  stat:
+    path: "{{ weblogic_jar_path }}"
+  register: install_jar
+
+- fail:
+    msg: "No such file: '{{ weblogic_jar_path }}' !"
+  when: not install_jar.stat.exists
+
+- name: Set installation Jar file permissions
+  file:
+    path: "{{ weblogic_jar_path }}"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+
+- name: Clean up existing domain
+  file:
+    path: '{{domain_config_home}}'
+    state: absent
+
+- name: Clean up the references to the existing domain
+  lineinfile:
+    dest: '{{fmw_middleware_dir}}/domain-registry.xml'
+    state: absent
+    regexp: '^.*domain location.*$'
+
+- name: Remove existing middleware home directory
+  file:
+    path: "{{ fmw_middleware_dir }}"
+    state: absent
+
+- name: Copy WLST scripts
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+    mode: 0750
+  with_items:
+    - { src: wls_setup_domain_and_cluser.py, dest: "{{ wls_scripts_dir }}/wls_setup_domain_and_cluser.py" }
+    - { src: wls_setup_domain_and_cluser.sh, dest: "{{ wls_scripts_dir }}/wls_setup_domain_and_cluser.sh" }
+    - { src: osb_setup_domain_and_cluser.py, dest: "{{ wls_scripts_dir }}/osb_setup_domain_and_cluser.py" }
+    - { src: osb_setup_domain_and_cluser.sh, dest: "{{ wls_scripts_dir }}/osb_setup_domain_and_cluser.sh" }
+    - { src: setup_MS_add_to_cluster.py, dest: "{{ wls_scripts_dir }}/setup_MS_add_to_cluster.py" }
+    - { src: setup_MS_add_to_cluster.sh, dest: "{{ wls_scripts_dir }}/setup_MS_add_to_cluster.sh" }
+    - { src: osb_control_admin_server.py, dest: "{{ wls_scripts_dir }}/osb_control_admin_server.py" }
+    - { src: osb_control_admin_server.sh, dest: "{{ wls_scripts_dir }}/osb_control_admin_server.sh" }
+    - { src: osb_control_managed_servers.py, dest: "{{ wls_scripts_dir }}/osb_control_managed_servers.py" }
+    - { src: osb_control_managed_servers.sh, dest: "{{ wls_scripts_dir }}/osb_control_managed_servers.sh" }
+    - { src: osb_import_project.py, dest: "{{ wls_scripts_dir }}/osb_import_project.py" }
+    - { src: osb_import_project.sh, dest: "{{ wls_scripts_dir }}/osb_import_project.sh" }
+
+- name: Find current Managed server's hostname and IP address
+  set_fact:
+    mserver: '{{mserver|default({}) | combine({inventory_hostname:hostvars[inventory_hostname].ansible_eth0.ipv4.address})}}'
+
+- name: Update Managed Server details in the configuration script
+  lineinfile:
+    path: '{{item}}'
+    regexp: '^machines='
+    line: 'machines={{mserver}}'
+  with_items:
+    - '{{ wls_scripts_dir }}/wls_setup_domain_and_cluser.py'
+    - '{{ wls_scripts_dir }}/osb_setup_domain_and_cluser.py'
+    - '{{ wls_scripts_dir }}/setup_MS_add_to_cluster.py'
+
+- name: Copy environments and properties files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ fmw_user }}"
+    group: "{{ fmw_group }}"
+  with_items:
+    - { src: osb_set_environment_variables.sh.j2 , dest: "{{ wls_scripts_dir }}/osb_set_environment_variables.sh" }
+    - { src: osb_environment.properties.j2, dest: "{{ wls_config_dir }}/osb_environment.properties" }
+
