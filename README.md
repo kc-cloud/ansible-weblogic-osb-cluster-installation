@@ -19,7 +19,7 @@ It contains the following roles. These roles are very granular for better flexib
 - project-config - add JMS and Database resources
 - operations - start and stop admin and managed servers
 
-##Tested using:
+## Tested using:
 
 - CentOS 6.9
 - Weblogic 12c
@@ -27,7 +27,7 @@ It contains the following roles. These roles are very granular for better flexib
 - ActiveMQ v5.15
 - Python 2.7
 
-##Usage:
+## Usage:
 
 - download the fmw\_12.2.1.2.0\_infrastructure.jar and fmw\_12.2.1.2.0\_osb.jar, and place them in the download\_folder
 - download this repository, and go to folder ansible-weblogic-osb-cluster-installation
