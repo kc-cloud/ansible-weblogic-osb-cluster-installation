@@ -29,7 +29,7 @@ It contains the following roles. These roles are very granular for better flexib
 
 ## Usage:
 
-- download the fmw\_12.2.1.2.0\_infrastructure.jar and fmw\_12.2.1.2.0\_osb.jar, and place them in the download\_folder
+- download the _fmw\_12.2.1.2.0\_infrastructure.jar_ and _fmw\_12.2.1.2.0\_osb.jar_, and place them in the _download\_folder_
 - download this repository, and go to folder ansible-weblogic-osb-cluster-installation
-- update inventory/prod/osb/hosts for host details, and group\_vars, host\_vars to customize the hosts, folders, ports etc
-- execute ansible-playbook -i inventory/prod/osb install-multi-machines-multi-servers-osb-cluster.yml to install multi-node OSB server
+- update _inventory/prod/osb/hosts_ for host details, and _group\_vars_, _host\_vars_ to customize the hosts, folders, ports etc
+- execute _ansible-playbook -i inventory/prod/osb install-multi-machines-multi-servers-osb-cluster.yml_ to install multi-node OSB server
